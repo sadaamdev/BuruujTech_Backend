@@ -8,13 +8,16 @@ export class UploadService {
 
     constructor() {
         const supabaseUrl = process.env.SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+        const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY; // Support both names
 
         if (!supabaseUrl || !supabaseKey) {
-            console.warn('Supabase credentials not found in environment variables');
+            console.error('FATAL ERROR: Supabase credentials missing.');
+            console.error('Check SUPABASE_URL and SUPABASE_KEY in your .env or Render Environment Variables.');
+            // We don't throw yet to avoid crashing the whole app on start, but we log heavily.
+            // Or better: ensure we don't try to use invalid clients
         }
 
-        this.supabase = createClient(supabaseUrl || '', supabaseKey || '');
+        this.supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder');
     }
 
     async uploadImage(file: Express.Multer.File): Promise<{ url: string }> {
