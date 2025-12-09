@@ -9,6 +9,11 @@ export class ContactService {
     private transporter;
 
     constructor(private prisma: PrismaService) {
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.error('FATAL ERROR: SMTP credentials missing.');
+            console.error('Check SMTP_HOST, SMTP_USER, SMTP_PASS in your .env or Render Environment Variables.');
+        }
+
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.example.com',
             port: parseInt(process.env.SMTP_PORT || '587') || 587,
