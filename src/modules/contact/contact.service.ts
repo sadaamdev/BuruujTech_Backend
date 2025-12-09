@@ -2,13 +2,20 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateContactDto } from './dto/contact.dto';
 import * as nodemailer from 'nodemailer';
-import DOMPurify from 'isomorphic-dompurify';
+import { JSDOM } from 'jsdom';
+import createDOMPurify from 'dompurify';
 
 @Injectable()
 export class ContactService {
     private transporter;
+    private sanitize;
 
     constructor(private prisma: PrismaService) {
+        // Initialize DOMPurify
+        const window = new JSDOM('').window;
+        const DOMPurify = createDOMPurify(window);
+        this.sanitize = DOMPurify.sanitize;
+
         if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
             console.error('FATAL ERROR: SMTP credentials missing.');
             console.error('Check SMTP_HOST, SMTP_USER, SMTP_PASS in your .env or Render Environment Variables.');
@@ -34,16 +41,16 @@ export class ContactService {
         // 2. Send Email with sanitized HTML
         try {
             // Sanitize all user inputs to prevent XSS
-            const sanitizedName = DOMPurify.sanitize(dto.name);
-            const sanitizedEmail = DOMPurify.sanitize(dto.email);
-            const sanitizedMessage = DOMPurify.sanitize(dto.message);
+            const sanitizedName = this.sanitize(dto.name);
+            const sanitizedEmail = this.sanitize(dto.email);
+            const sanitizedMessage = this.sanitize(dto.message);
 
             await this.transporter.sendMail({
                 from: '"Buruuj System" <no-reply@buruuj.com>',
                 to: process.env.CONTACT_EMAIL || 'info@buruuj.com',
                 subject: `New Contact Message: ${dto.subject}`,
                 text: `From: ${dto.name} (${dto.email})\n\nMessage:\n${dto.message}`,
-                html: DOMPurify.sanitize(`<p><strong>From:</strong> ${sanitizedName} (${sanitizedEmail})</p><p><strong>Message:</strong><br>${sanitizedMessage}</p>`),
+                html: this.sanitize(`<p><strong>From:</strong> ${sanitizedName} (${sanitizedEmail})</p><p><strong>Message:</strong><br>${sanitizedMessage}</p>`),
             });
         } catch (error) {
             console.error('Failed to send email:', error);
