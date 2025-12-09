@@ -11,6 +11,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { UploadModule } from './modules/upload/upload.module';
+import { UtilsModule } from './modules/utils/utils.module';
 
 @Module({
   imports: [
@@ -24,7 +25,9 @@ import { UploadModule } from './modules/upload/upload.module';
     PartnersModule,
     ContactModule,
     AuthModule,
+    AuthModule,
     UploadModule,
+    UtilsModule,
   ],
   controllers: [AppController],
   providers: [
